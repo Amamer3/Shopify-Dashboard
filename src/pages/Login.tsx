@@ -52,7 +52,7 @@ const Login = () => {
               <Shield className="h-6 w-6 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Urban Sole Store</CardTitle>
+          <CardTitle className="text-2xl font-bold">Shopify Dashboard</CardTitle>
           <CardDescription>Admin Dashboard Login</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -62,7 +62,7 @@ const Login = () => {
               <Input 
                 id="email" 
                 type="email" 
-                placeholder="admin@urbansole.com" 
+                placeholder="admin@shopify.com" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -78,7 +78,7 @@ const Login = () => {
               <Input 
                 id="password" 
                 type="password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

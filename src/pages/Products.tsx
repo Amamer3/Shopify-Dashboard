@@ -26,9 +26,8 @@ const Products = () => {
   const { toast } = useToast();
   const [productFormOpen, setProductFormOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [stockFilter, setStockFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [stockFilter, setStockFilter] = useState("all");
 
   const handleAddProduct = () => {
     setProductFormOpen(true);
@@ -92,12 +91,11 @@ const Products = () => {
                     <SelectTrigger className="w-[140px]">
                       <SelectValue placeholder="Category" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">All Categories</SelectItem>
-                      <SelectItem value="Running">Running</SelectItem>
-                      <SelectItem value="Casual">Casual</SelectItem>
-                      <SelectItem value="Sports">Sports</SelectItem>
-                      <SelectItem value="Streetwear">Streetwear</SelectItem>
+                    <SelectContent>                      <SelectItem value="all">All Categories</SelectItem>
+                      <SelectItem value="running">Running</SelectItem>
+                      <SelectItem value="casual">Casual</SelectItem>
+                      <SelectItem value="sports">Sports</SelectItem>
+                      <SelectItem value="streetwear">Streetwear</SelectItem>
                     </SelectContent>
                   </Select>
                   
@@ -105,8 +103,7 @@ const Products = () => {
                     <SelectTrigger className="w-[140px]">
                       <SelectValue placeholder="Stock Status" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">All</SelectItem>
+                    <SelectContent>                      <SelectItem value="all">All</SelectItem>
                       <SelectItem value="in-stock">In Stock</SelectItem>
                       <SelectItem value="low-stock">Low Stock</SelectItem>
                       <SelectItem value="out-of-stock">Out of Stock</SelectItem>
@@ -114,9 +111,8 @@ const Products = () => {
                   </Select>
                   
                   <Button variant="outline" onClick={() => {
-                    setSearchQuery("");
-                    setCategoryFilter("");
-                    setStockFilter("");
+                    setSearchQuery("");                    setCategoryFilter("all");
+                    setStockFilter("all");
                   }}>
                     <Filter className="h-4 w-4 mr-2" /> Reset
                   </Button>

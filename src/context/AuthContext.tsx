@@ -43,10 +43,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Mock authentication logic (replace with actual API calls)
-    if (email === "admin@urbansole.com" && password === "admin123") {
+    if (email === "admin@shopify.com" && password === "admin123") {
       const user = {
         id: "1",
-        email: "admin@urbansole.com",
+        email: "admin@shopify.com",
         name: "Admin User",
         role: "admin" as const
       };
