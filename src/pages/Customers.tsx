@@ -1,6 +1,6 @@
 
+import { Link } from "react-router-dom";
 import { Header } from "@/components/dashboard/Header";
-import { CustomerList } from "@/components/dashboard/CustomerList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, Download, Plus } from "lucide-react";
@@ -150,7 +150,9 @@ const Customers = () => {
                     <td className="px-6 py-4 text-sm font-medium">{customer.spent}</td>
                     <td className="px-6 py-4 text-sm text-gray-500">{customer.lastOrder}</td>
                     <td className="px-6 py-4">
-                      <Button size="sm" variant="outline" className="text-xs">View Details</Button>
+                      <Link to={`/customers/${customer.id}`}>
+                        <Button size="sm" variant="outline" className="text-xs">View Details</Button>
+                      </Link>
                     </td>
                   </tr>
                 ))}
