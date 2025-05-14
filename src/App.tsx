@@ -16,6 +16,7 @@ import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
 import Customers from "./pages/Customers";
 import CustomerDetail from "./pages/CustomerDetail";
+import Analytics from "./pages/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,11 @@ const App = () => (
             <Route path="/customers/:id" element={
               <ProtectedRoute>
                 <Layout><CustomerDetail /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/analytics" element={
+              <ProtectedRoute>
+                <Layout><Analytics /></Layout>
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

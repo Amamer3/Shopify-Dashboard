@@ -1,7 +1,7 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Package, ShoppingCart, Users, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Menu, X, LogOut, BarChart } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,11 @@ const navItems = [
     title: "Customers",
     href: "/customers",
     icon: Users,
+  },
+  {
+    title: "Analytics",
+    href: "/analytics",
+    icon: BarChart,
   },
 ];
 
