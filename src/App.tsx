@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
 import Customers from "./pages/Customers";
 import CustomerDetail from "./pages/CustomerDetail";
 
@@ -41,6 +42,11 @@ const App = () => (
             <Route path="/orders" element={
               <ProtectedRoute>
                 <Layout><Orders /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/orders/:id" element={
+              <ProtectedRoute>
+                <Layout><OrderDetail /></Layout>
               </ProtectedRoute>
             } />
             <Route path="/customers" element={

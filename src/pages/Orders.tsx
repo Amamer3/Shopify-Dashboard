@@ -1,8 +1,10 @@
 
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Header } from "@/components/dashboard/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Download } from "lucide-react";
+import { Search, Filter, Download, Eye } from "lucide-react";
 
 type OrderStatus = "delivered" | "pending" | "processing" | "cancelled";
 
@@ -37,6 +39,21 @@ const statusStyles: Record<OrderStatus, string> = {
 };
 
 const Orders = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+  
+  // Filter orders based on search query and status
+  const filteredOrders = mockOrders.filter(order => {
+    const matchesSearch = 
+      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.email.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="flex-1 bg-store-light-gray min-h-screen">
       <Header 
@@ -51,13 +68,20 @@ const Orders = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input 
               placeholder="Search orders..." 
-              className="pl-10 md:w-80 bg-white" 
+              className="pl-10 md:w-80 bg-white"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Filter className="h-4 w-4" /> Filter
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => setStatusFilter(statusFilter === "all" ? "delivered" : "all")}
+            >
+              <Filter className="h-4 w-4" /> 
+              Filter: {statusFilter === "all" ? "All" : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
             </Button>
             <Button variant="outline" className="flex items-center gap-2">
               <Download className="h-4 w-4" /> Export
@@ -81,7 +105,7 @@ const Orders = () => {
                 </tr>
               </thead>
               <tbody>
-                {mockOrders.map((order) => (
+                {filteredOrders.map((order) => (
                   <tr key={order.id} className="border-b last:border-0 hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm font-medium">{order.id}</td>
                     <td className="px-6 py-4">
@@ -99,7 +123,11 @@ const Orders = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <Button size="sm" variant="outline" className="text-xs">View Details</Button>
+                      <Button size="sm" variant="outline" className="text-xs flex items-center gap-1" asChild>
+                        <Link to={`/orders/${order.id}`}>
+                          <Eye className="h-3 w-3" /> View
+                        </Link>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -108,7 +136,7 @@ const Orders = () => {
           </div>
           <div className="px-6 py-4 border-t">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">Showing 10 of 124 orders</p>
+              <p className="text-sm text-gray-500">Showing {filteredOrders.length} of {mockOrders.length} orders</p>
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" disabled>Previous</Button>
                 <Button variant="outline" size="sm">Next</Button>

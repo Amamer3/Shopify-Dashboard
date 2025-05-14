@@ -1,6 +1,7 @@
 
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 type OrderStatus = "delivered" | "pending" | "processing" | "cancelled";
 
@@ -45,6 +46,7 @@ export const RecentOrders = () => {
               <th className="font-medium text-left px-6 py-3">Date</th>
               <th className="font-medium text-left px-6 py-3">Amount</th>
               <th className="font-medium text-left px-6 py-3">Status</th>
+              <th className="font-medium text-left px-6 py-3">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -58,6 +60,13 @@ export const RecentOrders = () => {
                   <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusStyles[order.status]}`}>
                     {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                   </span>
+                </td>
+                <td className="px-6 py-4">
+                  <Button size="sm" variant="outline" className="text-xs flex items-center gap-1 p-1" asChild>
+                    <Link to={`/orders/${order.id}`}>
+                      <Eye className="h-3 w-3" /> View
+                    </Link>
+                  </Button>
                 </td>
               </tr>
             ))}
