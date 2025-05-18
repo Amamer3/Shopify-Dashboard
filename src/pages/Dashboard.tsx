@@ -7,10 +7,6 @@ import { DollarSign, Package, ShoppingCart, Users } from "lucide-react";
 const Dashboard = () => {
   return (
     <div className="flex-1 bg-store-light-gray min-h-screen">
-      <Header 
-        title="Dashboard" 
-        subtitle="Welcome back to your store overview"
-      />
       
       <div className="p-6">
         {/* Stats Cards */}

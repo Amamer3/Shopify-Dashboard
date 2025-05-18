@@ -8,15 +8,16 @@ interface StatCardProps {
   isPositive?: boolean;
   icon: LucideIcon;
   iconColor?: string;
+  description?: string;
 }
 
-export const StatCard = ({
-  title,
+export const StatCard = ({  title,
   value,
   change,
   isPositive = true,
   icon: Icon,
-  iconColor = "bg-blue-100 text-blue-600"
+  iconColor = "bg-blue-100 text-blue-600",
+  description
 }: StatCardProps) => {
   return (
     <div className="bg-white rounded-lg shadow p-6 animate-fade-in">

@@ -1,132 +1,239 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Package, ShoppingCart, Users, Menu, X, LogOut, BarChart } from "lucide-react";
-import { useState } from "react";
+import { 
+  LayoutDashboard, 
+  Package, 
+  ShoppingCart, 
+  Users, 
+  Menu, 
+  X, 
+  LogOut, 
+  BarChart, 
+  Settings,
+  ShieldAlert,
+  ChevronsLeft,
+  ChevronsRight
+} from "lucide-react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { usePermissions } from "@/hooks/use-permissions";
 import { useToast } from "@/hooks/use-toast";
+import type { Permission } from "@/types/permissions";
 
-const navItems = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Products",
-    href: "/products",
-    icon: Package,
-  },
-  {
-    title: "Orders",
-    href: "/orders",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Customers",
-    href: "/customers",
-    icon: Users,
-  },
-  {
-    title: "Analytics",
-    href: "/analytics",
-    icon: BarChart,
-  },
-];
+interface SidebarProps {
+  onCollapse: (collapsed: boolean) => void;
+}
 
-export const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+export function Sidebar({ onCollapse }: SidebarProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const saved = localStorage.getItem("sidebarCollapsed");
+    return saved === "true";
+  });
+
+  useEffect(() => {
+    onCollapse(isCollapsed);
+    localStorage.setItem("sidebarCollapsed", String(isCollapsed));
+  }, [isCollapsed, onCollapse]);
+
   const location = useLocation();
   const { user, logout } = useAuth();
   const { toast } = useToast();
-  
-  const toggleSidebar = () => setCollapsed(!collapsed);
+  const { hasPermission } = usePermissions();
 
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out.",
-    });
+  const isSuperAdmin = () => user?.role === 'superadmin';
+
+  const getNavItems = () => {
+    const items = [
+      {
+        title: "Dashboard",
+        href: isSuperAdmin() ? "/dashboard" : "/admin-dashboard",
+        icon: LayoutDashboard,
+        permission: null // Always show dashboard
+      },
+    ];
+
+    if (hasPermission('view_products')) {
+      items.push({
+        title: "Products",
+        href: "/products",
+        icon: Package,
+        permission: 'view_products' as Permission
+      });
+    }
+
+    if (hasPermission('view_orders')) {
+      items.push({
+        title: "Orders",
+        href: "/orders",
+        icon: ShoppingCart,
+        permission: 'view_orders' as Permission
+      });
+    }
+
+    if (hasPermission('view_customers')) {
+      items.push({
+        title: "Customers",
+        href: "/customers",
+        icon: Users,
+        permission: 'view_customers' as Permission
+      });
+    }
+
+    if (hasPermission('view_analytics')) {
+      items.push({
+        title: "Analytics",
+        href: "/analytics",
+        icon: BarChart,
+        permission: 'view_analytics' as Permission
+      });
+    }
+
+    if (isSuperAdmin()) {
+      items.push({
+        title: "User Management",
+        href: "/users",
+        icon: ShieldAlert,
+        permission: 'manage_users' as Permission
+      });
+    }    if (isSuperAdmin()) {
+      items.push({
+        title: "Settings",
+        href: "/settings",
+        icon: Settings,
+        permission: null // Settings only available to superadmin
+      });
+    }
+
+    return items;
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error) {
+      toast({
+        title: "Logout failed",
+        description: "An error occurred while logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const navItems = getNavItems();
+
   return (
-    <>
-      {/* Mobile Toggle Button */}
-      <button 
-        onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 lg:hidden bg-white p-2 rounded-md shadow-md"
+    <div className="h-full">      
+      <button
+        type="button"
+        className="fixed p-2.5 bg-white/80 backdrop-blur-sm border rounded-lg top-2 left-2 lg:hidden z-[60] shadow-sm hover:bg-white"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+        aria-expanded={isMobileMenuOpen}
       >
-        {collapsed ? <X size={20} /> : <Menu size={20} />}
+        {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
       </button>
-      
-      {/* Sidebar */}
-      <div className={cn(
-        "fixed top-0 left-0 z-40 h-full bg-store-navy text-white transition-all duration-300 ease-in-out",
-        collapsed ? "-translate-x-full" : "translate-x-0",
-        "lg:translate-x-0",
-        "w-64 lg:w-64"
-      )}>
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-6 border-b border-slate-700">
-            <h1 className="text-xl font-bold">Urban Sole Store</h1>
+      {/* this is not what I'm looking for... */}
+      <aside
+        className={cn(
+          "h-screen border-r shadow-sm",
+          "fixed lg:sticky inset-y-0 left-0 top-0 z-[50]",
+          "transform transition-all duration-200 ease-in-out",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          isCollapsed ? "w-16" : "w-56",
+          "bg-white border-gray-200 lg:border-r lg:border-gray-200"
+        )}
+      >
+        <div className="flex flex-col h-full bg-white relative">          
+          <div className="flex items-center h-16 border-b relative bg-white/50 backdrop-blur-sm">
+            <div className="flex items-center px-4 w-full">
+              <h1 className={cn(
+                "font-bold transition-all duration-200 truncate text-gray-900",
+                isCollapsed ? "text-base" : "text-lg"
+              )}>
+                {isCollapsed ? "S&D" : "Shopify Dashboard"}
+              </h1>
+              <button
+                onClick={() => {
+                  const newCollapsed = !isCollapsed;
+                  setIsCollapsed(newCollapsed);
+                  onCollapse(newCollapsed);
+                }}
+                className={cn(
+                  "absolute right-2 p-1.5 rounded-md hidden lg:flex",
+                  "hover:bg-gray-100/80 transition-colors",
+                  "items-center justify-center"
+                )}
+                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {isCollapsed ? (
+                  <ChevronsRight className="h-4 w-4 text-gray-600" />
+                ) : (
+                  <ChevronsLeft className="h-4 w-4 text-gray-600" />
+                )}
+              </button>
+            </div>
           </div>
-          
-          {/* Nav Links */}
-          <nav className="flex-1 p-4">
-            <ul className="space-y-2">
+          <nav className="flex-1 ">
+            <ul className="p-2 space-y-1">
               {navItems.map((item) => (
-                <li key={item.href}>
+                <li key={`${item.title}-${item.href}`}>
                   <Link
                     to={item.href}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-md transition-colors",
-                      location.pathname === item.href
-                        ? "bg-store-purple text-white"
-                        : "text-gray-300 hover:bg-slate-800 hover:text-white"
+                      "flex items-center px-3 py-2 rounded-lg transition-colors",
+                      "text-sm font-medium text-gray-700 hover:text-gray-900",
+                      "hover:bg-gray-100/80",
+                      location.pathname === item.href && "bg-primary/5 text-primary hover:bg-primary/10",
+                      isCollapsed && "justify-center"
                     )}
-                    onClick={() => setCollapsed(true)}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    title={isCollapsed ? item.title : undefined}
                   >
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.title}</span>
+                    <item.icon className={cn(
+                      "w-5 h-5 shrink-0",
+                      location.pathname === item.href ? "text-primary" : "text-gray-500",
+                      !isCollapsed && "mr-3"
+                    )} />
+                    {!isCollapsed && <span>{item.title}</span>}
                   </Link>
                 </li>
               ))}
             </ul>
           </nav>
-          
-          {/* Footer */}
-          <div className="p-4 border-t border-slate-700">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-3 px-4 py-2">
-                <div className="h-8 w-8 rounded-full bg-store-purple flex items-center justify-center">
-                  <span className="font-bold">{user?.name.charAt(0) || "U"}</span>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">{user?.name || "User"}</p>
-                  <p className="text-xs text-gray-400">{user?.email || "admin@urbansole.com"}</p>
-                </div>
-              </div>
-              <button 
-                onClick={handleLogout}
-                className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-slate-800 hover:text-white rounded-md transition-colors w-full"
-              >
-                <LogOut className="h-5 w-5" />
-                <span>Log out</span>
-              </button>
-            </div>
+          <div className="p-2 border-t mt-auto">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className={cn(
+                "flex items-center w-full px-3 py-2 rounded-lg transition-colors",
+                "text-sm font-medium text-gray-700 hover:text-red-600",
+                "hover:bg-red-50/80",
+                isCollapsed && "justify-center"
+              )}
+            >
+              <LogOut className={cn(
+                "w-5 h-5 shrink-0 text-gray-500",
+                "hover:text-red-500",
+                !isCollapsed && "mr-3"
+              )} />
+              {!isCollapsed && <span>Logout</span>}
+            </button>
           </div>
         </div>
-      </div>
-      
-      {/* Overlay for mobile view */}
-      {!collapsed && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={() => setCollapsed(true)}
+      </aside>
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm lg:hidden z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+          role="button"
+          aria-label="Close mobile menu"
         />
       )}
-    </>
+    </div>
   );
-};
+}

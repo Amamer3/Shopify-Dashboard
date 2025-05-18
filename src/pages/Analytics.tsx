@@ -39,6 +39,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { cn } from "@/lib/utils";
 
 const salesData = [
   { month: "Jan", revenue: 12500, orders: 87, target: 12000 },
@@ -89,15 +90,34 @@ const forecastData = [
 
 const COLORS = ['#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#EC4899'];
 
+
+const getBreadcrumbs = () => {
+      const paths = location.pathname.split('/').filter(Boolean);
+      return paths.map((path, index) => {
+        const displayName = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
+        const isLast = index === paths.length - 1;
+        return (
+          <span key={path} className="flex items-center">
+            {index > 0 && <span className="mx-2 text-gray-400">/</span>}
+            <span className={cn(
+              "hover:text-primary cursor-pointer",
+              isLast ? "text-gray-600" : "text-gray-400"
+            )}>
+              {displayName}
+            </span>
+          </span>
+        );
+      });
+    };
 const Analytics = () => {
   const [timeframe, setTimeframe] = useState("year");
 
   return (
     <div className="flex-1 bg-store-light-gray min-h-screen">
-      <Header 
-        title="Analytics" 
-        subtitle="Track your store's performance and trends"
-      />
+      {/* Breadcrumbs */}
+        <div className="flex text-sm items-center h-6">
+          {getBreadcrumbs()}
+        </div> 
       
       <div className="p-6">
         <div className="mb-6 flex items-center justify-between">

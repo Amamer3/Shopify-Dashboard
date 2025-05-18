@@ -1,23 +1,69 @@
+import { ReactNode, Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AdminRoute } from "@/components/auth/AdminRoute";
+import { SuperAdminRoute } from "@/components/auth/SuperAdminRoute";
 import { Layout } from "@/components/dashboard/Layout";
-import { HelmetProvider } from 'react-helmet-async';
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
-import Products from "./pages/Products";
-import Orders from "./pages/Orders";
-import OrderDetail from "./pages/OrderDetail";
-import Customers from "./pages/Customers";
-import CustomerDetail from "./pages/CustomerDetail";
-import Analytics from "./pages/Analytics";
+import { HelmetProvider } from "react-helmet-async";
+import { ErrorBoundary } from "react-error-boundary";
 
-const queryClient = new QueryClient();
+// Lazy-loaded pages
+const Login = lazy(() => import("./pages/Login"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Products = lazy(() => import("./pages/Products"));
+const Orders = lazy(() => import("./pages/Orders"));
+const OrderDetail = lazy(() => import("./pages/OrderDetail"));
+const Customers = lazy(() => import("./pages/Customers"));
+const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Users = lazy(() => import("./pages/Users"));
+const Settings = lazy(() => import("./pages/Settings")); // Added Settings page
+const Profile = lazy(() => import("./pages/Profile")); // Added Profile page
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
+
+// Error fallback component
+const ErrorFallback = ({ error }: { error: Error }) => (
+  <div className="p-4 text-red-600" role="alert">
+    <h2>Something went wrong</h2>
+    <p>{error.message}</p>
+  </div>
+);
+
+// Redirect based on auth status
+const RootRedirect = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div className="p-4">Loading...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Check if user has super admin role
+  const isSuperAdmin = user.role === 'superadmin';
+  return <Navigate to={isSuperAdmin ? "/dashboard" : "/admin-dashboard"} replace />;
+};
+
+// Wrapper for protected routes with Layout
+const ProtectedLayout = ({ children }: { children: ReactNode }) => (
+  <Layout>{children}</Layout>
+);
 
 const App = () => (
   <HelmetProvider>
@@ -25,47 +71,131 @@ const App = () => (
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <Sonner />
-          <BrowserRouter>          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Layout><Dashboard /></Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/products" element={
-                <ProtectedRoute>
-                  <Layout><Products /></Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/orders" element={
-                <ProtectedRoute>
-                  <Layout><Orders /></Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/orders/:id" element={
-                <ProtectedRoute>
-                  <Layout><OrderDetail /></Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/customers" element={
-                <ProtectedRoute>
-                  <Layout><Customers /></Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/customers/:id" element={
-                <ProtectedRoute>
-                  <Layout><CustomerDetail /></Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/analytics" element={
-                <ProtectedRoute>
-                  <Layout><Analytics /></Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+          <BrowserRouter>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <Suspense fallback={<div className="p-4">Loading...</div>}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<RootRedirect />} />
+                  <Route path="/login" element={<Login />} />
+
+                  {/* Protected Routes with Layout */}
+                  <Route
+                    path="/admin-dashboard"
+                    element={
+                      <AdminRoute>
+                        <ProtectedLayout>
+                          <AdminDashboard />
+                        </ProtectedLayout>
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/products"
+                    element={
+                      <AdminRoute requiredPermissions={["view_products"]}>
+                        <ProtectedLayout>
+                          <Products />
+                        </ProtectedLayout>
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/orders"
+                    element={
+                      <AdminRoute requiredPermissions={["view_orders"]}>
+                        <ProtectedLayout>
+                          <Orders />
+                        </ProtectedLayout>
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/orders/:id"
+                    element={
+                      <AdminRoute requiredPermissions={["view_orders"]}>
+                        <ProtectedLayout>
+                          <OrderDetail />
+                        </ProtectedLayout>
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/customers"
+                    element={
+                      <AdminRoute requiredPermissions={["view_customers"]}>
+                        <ProtectedLayout>
+                          <Customers />
+                        </ProtectedLayout>
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/customers/:id"
+                    element={
+                      <AdminRoute requiredPermissions={["view_customers"]}>
+                        <ProtectedLayout>
+                          <CustomerDetail />
+                        </ProtectedLayout>
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/analytics"
+                    element={
+                      <AdminRoute requiredPermissions={["view_analytics"]}>
+                        <ProtectedLayout>
+                          <Analytics />
+                        </ProtectedLayout>
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <SuperAdminRoute>
+                        <ProtectedLayout>
+                          <Dashboard />
+                        </ProtectedLayout>
+                      </SuperAdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/users"
+                    element={
+                      <SuperAdminRoute>
+                        <ProtectedLayout>
+                          <Users />
+                        </ProtectedLayout>
+                      </SuperAdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <SuperAdminRoute>
+                        <ProtectedLayout>
+                          <Settings />
+                        </ProtectedLayout>
+                      </SuperAdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <ProtectedLayout>
+                          <Profile />
+                        </ProtectedLayout>
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Catch-all route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/tabs";
 import { Search, Filter, Plus, Trash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const Products = () => {
   const { toast } = useToast();
@@ -57,12 +58,31 @@ const Products = () => {
     setSelectedItems([]);
   };
 
+  const getBreadcrumbs = () => {
+      const paths = location.pathname.split('/').filter(Boolean);
+      return paths.map((path, index) => {
+        const displayName = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
+        const isLast = index === paths.length - 1;
+        return (
+          <span key={path} className="flex items-center">
+            {index > 0 && <span className="mx-2 text-gray-400">/</span>}
+            <span className={cn(
+              "hover:text-primary cursor-pointer",
+              isLast ? "text-gray-600" : "text-gray-400"
+            )}>
+              {displayName}
+            </span>
+          </span>
+        );
+      });
+    };
+
   return (
     <div className="flex-1 bg-store-light-gray min-h-screen">
-      <Header 
-        title="Products" 
-        subtitle="Manage your product inventory"
-      />
+      {/* Breadcrumbs */}
+        <div className="flex text-sm items-center h-6">
+          {getBreadcrumbs()}
+        </div> 
       
       <div className="p-6">
         {/* Tabs */}

@@ -1,19 +1,22 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { authService } from "@/services/auth.service";
+import { LoginCredentials } from "@/types/auth";
 
-interface User {
+export interface User {
   id: string;
   email: string;
   name: string;
-  role: "admin" | "manager";
+  role: "admin" | "superadmin";
+  permissions?: string[];
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
+  getToken: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,47 +28,90 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if user is stored in localStorage
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    const initializeAuth = async () => {
+      try {
+        const storedToken = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("user");
+
+        if (storedToken && storedUser) {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        // Clear everything if there's an error
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setToken(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    // In a real app, this would be an API call
+  const login = async (credentials: LoginCredentials) => {
     setLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock authentication logic (replace with actual API calls)
-    if (email === "admin@shopify.com" && password === "admin123") {
-      const user = {
-        id: "1",
-        email: "admin@shopify.com",
-        name: "Admin User",
-        role: "admin" as const
-      };
-      setUser(user);
-      localStorage.setItem("user", JSON.stringify(user));
-    } else {
-      throw new Error("Invalid email or password");
+    try {
+      const response = await authService.login(credentials);
+      console.log("Login response:", response);
+
+      if (!response.token || !response.user) {
+        throw new Error("Invalid login response from server");
+      }
+
+      // First store in state
+      setToken(response.token);
+      setUser(response.user);
+
+      // Then store in localStorage
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(response.user));
+
+      // Verify token is stored
+      const storedToken = localStorage.getItem("token");
+      console.log("Stored token:", storedToken);
+    } catch (error) {
+      console.error("Login error in context:", error);
+      // Clear everything if there's an error
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setToken(null);
+      setUser(null);
+      throw error;
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const logout = () => {
-    setUser(null);
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
+    setToken(null);
+    setUser(null);
+  };
+
+  const getToken = (): string | null => {
+    // First try state, then localStorage
+    return token || localStorage.getItem("token");
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user && !!getToken(),
+        loading,
+        login,
+        logout,
+        getToken,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
